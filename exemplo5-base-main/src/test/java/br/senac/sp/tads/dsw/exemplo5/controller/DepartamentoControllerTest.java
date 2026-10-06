@@ -72,10 +72,10 @@ public class DepartamentoControllerTest {
         repository.save(departamento);
 
         mockMvc.perform(get("/api/departamentos"))
-                .andExpect(status().isOk()); 
+                .andExpect(status().isOk());
     }
 
-    @Test 
+    @Test
     void deveBuscarDepartamentoPorId() throws Exception {
         Departamento departamento = new Departamento();
         departamento.setNome("Turma B - TADS");
@@ -84,7 +84,44 @@ public class DepartamentoControllerTest {
 
         mockMvc.perform(get("/api/departamentos/" + departamento.getId()))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(departamento.getId()))
                 .andExpect(jsonPath("$.nome").value("Turma B - TADS"))
                 .andExpect(jsonPath("$.orcamento").value(360.00));
+    }
+
+    @Test
+    void deveAtualizarDepartamento() throws Exception {
+        Departamento departamento = new Departamento();
+        departamento.setNome("Turma B - TADS");
+        departamento.setOrcamento(360.00);
+        Departamento departamentoSalvo = repository.save(departamento);
+
+        departamentoSalvo.setNome("Turma da Fernanda");
+
+        String json = objectMapper.writeValueAsString(departamentoSalvo);
+
+        mockMvc.perform(
+                put("/api/departamentos/" + departamentoSalvo.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+
+                .andExpect(status().isOk()) //200 - OK
+                .andExpect(jsonPath("$.nome").value("Turma da Fernanda"))
+                .andExpect(jsonPath("$.orcamento").value(360.00));
+    }
+
+    @Test 
+    void deveApagarDepartamento() throws Exception {
+        Departamento departamento = new Departamento();
+        departamento.setNome("Turma B - TADS");
+        departamento.setOrcamento(360.00);
+        Departamento departamentoSalvo = repository.save(departamento);
+
+        mockMvc.perform(delete("/api/departamentos/" + departamentoSalvo.getId()))
+                .andExpect(status().isNoContent()); // 204 - No Content
+
+                // Verificar se o departamento foi realmente removido
+                mockMvc.perform(get("/api/departamentos/" + departamentoSalvo.getId()))
+                        .andExpect(status().isNotFound()); // 404 - Not Found
     }
 }
